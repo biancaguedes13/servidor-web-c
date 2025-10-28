@@ -62,14 +62,10 @@ void send_404(int client) {
 }
 /*gera e envia listagem html do diretorio*/
 void send_listagem(int client, const char *dirpath) {
-    printf("Gerando listagem para: %s\n", dirpath);
-    
     char buffer[BUFFER_SIZE];
     snprintf(buffer, sizeof(buffer),
-             "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n"
-             "<html><head><title>Listagem de Arquivos</title></head>"
-             "<body><h1>Arquivos no diretorio: %s</h1><ul>",
-             dirpath);
+             "HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\n"
+             "Arquivos em %s:\n", dirpath);
     send(client, buffer, strlen(buffer), 0);
 
     DIR *d = opendir(dirpath);
@@ -77,16 +73,12 @@ void send_listagem(int client, const char *dirpath) {
         struct dirent *entry;
         while ((entry = readdir(d)) != NULL) {
             if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
-                snprintf(buffer, sizeof(buffer),
-                         "<li><a href=\"%s\">%s</a></li>", entry->d_name, entry->d_name);
+                snprintf(buffer, sizeof(buffer), "%s\n", entry->d_name);
                 send(client, buffer, strlen(buffer), 0);
             }
         }
         closedir(d);
     }
-
-    snprintf(buffer, sizeof(buffer), "</ul></body></html>");
-    send(client, buffer, strlen(buffer), 0);
 }
 
 int main(int argc, char *argv[]) {
@@ -153,8 +145,6 @@ int main(int argc, char *argv[]) {
             //se nao, exibe erro
             //se nao existe o index.html ele faz a listagem dos arquivos existentes
             if (strcmp(metodo, "GET") == 0) {
-                printf("Requisição: GET %s\n", arquivo);
-
                 char filepath[512];
                 if (strlen(arquivo) == 0) {
                     snprintf(filepath, sizeof(filepath), "%s/index.html", dirpath);
